@@ -1,0 +1,236 @@
+# Xmly's Unlimited Shield
+
+给所有生物加一层几乎无法击破的护盾。护盾量以科学计数法存储，可以远超任何浮点数能表达的
+范围。
+
+**简体中文** | [English](#english)
+
+---
+
+## 简体中文
+
+### 护盾的构成
+
+护盾量写成 `z = x × 10^y`，`y` 是 64 位整数：
+
+- **`y`（次数盾）** —— `y ≥ 0` 时生效，每次结算从 `y` 上扣掉伤害的量级。
+- **`x`（保底池）** —— `y` 掉进负数后接替，伤害改为**加算**后从 `x` 扣除。
+
+只有 `y < 0` 且 `x` 也耗尽时，护盾才会消失。护盾存在期间生物血量被冻结，几乎任何伤害都
+打不动它。
+
+### 结算
+
+每 20 tick（可配置）结算一次，把这期间收到的伤害一次性算清。
+
+**伤害量结算**：不做连乘，而是取每个伤害值的二进制指数求和，再换算成十进制。不会溢出、
+下溢或产生 `NaN`，浮点开销也更低。
+
+**连击数结算**：由生物身上的 `hitsY` 决定，两种结算可以叠加：
+
+| hitsY | 结算方式 |
+| --- | --- |
+| `0` | 仅伤害量结算 |
+| `1..127` | 伤害量结算 **+** 连击数结算 |
+| `-1..-127` | 仅连击数结算 |
+| `-128` | 关闭 `y`，护盾退化为纯保底池 |
+
+特殊值不参与运算，直接给固定增减：`0` → `y += 256`，`∞` → `y -= 384`，`NaN` → `y -= 512`。
+
+### 抗性
+
+护盾期间，生物不会死亡，也不掉落物品或经验，且免疫击退。除了常规攻击伤害，也覆盖直接
+改写血量、瞬间治疗、血量溢出或为负、以及各种秒杀手段。
+
+### 获取方式
+
+- **敌对生物**：自然生成时获得护盾，形状由配置决定。
+- **中立 / 被动生物**：无护盾。
+- **玩家**：不自动获得，用指令发放。
+
+### 指令
+
+需要权限等级 2。
+
+```
+/shield add <目标> <x> <y> [hitsY]     设置护盾
+/shield remove <目标>                  移除护盾
+/shield query <目标>                   查询护盾量
+/shield addnear <x> <y> <半径>         给半径内的生物加护盾
+/shield removenear <半径>              移除半径内生物的护盾
+```
+
+### 查看护盾
+
+默认 **V** 键开关「护盾查看」。开启后准心指向有护盾的生物会**锁定**显示，数值实时刷新，
+视线移开也继续显示，直到指向下一个生物；无护盾的生物只在准心指着它时显示。
+
+护盾量也会显示在信息提示类界面中，与快捷键开关无关。
+
+### 附魔
+
+| 附魔 | 等级 | 效果 |
+| --- | --- | --- |
+| **比特盾除** | 1–255 | 可附到任意物品上。以十六的幂为单位削去护盾，一次砍掉整个数量级 |
+| **连击盾破** | 1–5 | 主手。被攻击生物结算时按 `2^等级` 计次 |
+| **连击易伤** | 1 | 主手。把被攻击生物的次数盾向外推一格 |
+| **盾复诅咒** | 1 | 诅咒。你打到的生物结算时护盾指数翻倍 |
+
+**调整比特盾除等级**：把下界之星和附魔物品放进合成网格。以物品为原点（上为 `+y`、右为 `+x`），
+下界之星的偏移决定等级变化：
+
+```
+          x=-2  x=-1   x=0  x=+1  x=+2
+ y=-2      -32   -8    -2    -5    -7
+ y=-1      -16   -4    -1    -3    -6
+ y= 0       -2   -1     ·    +1    +2
+ y=+1      +16   +4    +1    +3    +6
+ y=+2      +32   +8    +2    +5    +7
+```
+
+### 配置
+
+`config/xmly_unlimitshield-common.toml`。所有 `x` / `y` 数值项遵循同一规则：
+**正数**是直接值，**负数**是最大生命值的倍率。
+
+| 键 | 默认值 | 说明 |
+| --- | --- | --- |
+| `mobSpawnX` / `mobSpawnY` | `-7` / `-1` | 自然生成生物的护盾形状 |
+| `mobMaxX` / `mobMaxY` | `1e10` | 生物的 `x` / `y` 上限 |
+| `playerMaxX` / `playerMaxY` | `1e10` / `1` | 玩家的 `x` / `y` 上限 |
+| `defaultHitsY` | `0` | `hitsY` 默认值 |
+| `settleInterval` | `20` | 结算间隔（tick） |
+| `lockHealth` | `true` | 护盾期间冻结血量，治疗量转为护盾值 |
+| `grantToMonsters` | `true` | 敌对生物生成时是否自动获得护盾 |
+| `blockKnockback` | `true` | 有盾时是否免疫击退 |
+| `blockDirectRemoval` | `false` | 是否拒绝实体被直接删除 |
+| `debugSettlementLog` | `false` | 输出护盾变动日志 |
+
+### 整合包适配
+
+自然生成的护盾形状是固定的配置值。需要按进度、任务完成度等阶段缩放时：
+
+- 监听 `ShieldGrantEvent` —— 在护盾发放前触发，可以改写 `x` / `y`，也可以取消发放；
+- 或随时调用 `UnlimitedShieldApi` 的静态方法直接读写护盾。
+
+---
+
+<a id="english"></a>
+
+## English
+
+Gives every living thing a shield that is very nearly impossible to break through. Its magnitude is
+stored in scientific notation, so a single shield can reach far beyond anything a floating point
+number could hold.
+
+### How a shield is built
+
+A shield is written as `z = x × 10^y`, where `y` is a 64-bit integer:
+
+- **`y` (the count shield)** — active while `y ≥ 0`; each settlement takes the magnitude of the
+  damage off it.
+- **`x` (the fallback pool)** — takes over once `y` falls below zero, where damage is **summed**
+  rather than scaled and subtracted from `x`.
+
+The shield only disappears when `y < 0` *and* `x` is spent too. While it holds, the entity's health
+is frozen and almost nothing gets through.
+
+### Settlement
+
+Every 20 ticks (configurable) everything taken during that window is settled at once.
+
+**Damage settlement** never multiplies the batch. It sums the binary exponents of the damage values
+and converts the total to decimal, which cannot overflow, underflow or produce a `NaN`, and costs
+less floating point work.
+
+**Hit-count settlement** is driven by the entity's `hitsY`, and the two stack:
+
+| hitsY | What settles |
+| --- | --- |
+| `0` | damage only |
+| `1..127` | damage **and** hit count |
+| `-1..-127` | hit count only |
+| `-128` | `y` switched off; the shield becomes a pure fallback pool |
+
+Special values never enter the maths and apply a fixed change instead: `0` → `y += 256`,
+`∞` → `y -= 384`, `NaN` → `y -= 512`.
+
+### What it resists
+
+While the shield holds the entity cannot die, drops no loot or experience, and is not knocked back.
+Beyond ordinary attack damage that covers direct health writes, instant healing, health that
+overflows or goes negative, and instant-kill effects.
+
+### How shields are obtained
+
+- **Hostile creatures** — granted on spawn, shaped by the config.
+- **Neutral and passive creatures** — never granted one.
+- **Players** — never granted one; use the commands.
+
+### Commands
+
+Requires permission level 2.
+
+```
+/shield add <targets> <x> <y> [hitsY]   set a shield
+/shield remove <targets>                remove it
+/shield query <targets>                 read it back
+/shield addnear <x> <y> <radius>        shield everything within a radius
+/shield removenear <radius>             unshield everything within a radius
+```
+
+### Reading a shield
+
+**V** toggles shield inspection. While it is on, aiming at a shielded creature **locks on**: the
+value refreshes live and stays on screen even after you look away, until you aim at something else.
+A creature without a shield is only shown while you are actually looking at it.
+
+Shield values also appear in tooltip-style overlays, independently of the keybind.
+
+### Enchantments
+
+| Enchantment | Levels | Effect |
+| --- | --- | --- |
+| **Bit Shield Removal** | 1–255 | Applies to any item. Cuts the shield by whole powers of sixteen, taking off an order of magnitude at a time |
+| **Combo Shield Break** | 1–5 | Main hand. The creature you hit counts as `2^level` hits for that settlement |
+| **Combo Vulnerability** | 1 | Main hand. Pushes the target's count shield one step further from zero |
+| **Shield Restoration Curse** | 1 | Curse. Whatever you hit has its shield exponent doubled for that settlement |
+
+**Setting the level of Bit Shield Removal**: put a nether star and the enchanted item in a crafting
+grid. With the item as the origin (`+y` up, `+x` right), the star's offset sets the change:
+
+```
+          x=-2  x=-1   x=0  x=+1  x=+2
+ y=-2      -32   -8    -2    -5    -7
+ y=-1      -16   -4    -1    -3    -6
+ y= 0       -2   -1     ·    +1    +2
+ y=+1      +16   +4    +1    +3    +6
+ y=+2      +32   +8    +2    +5    +7
+```
+
+### Configuration
+
+`config/xmly_unlimitshield-common.toml`. Every `x` / `y` value follows the same rule: **positive**
+is the value itself, **negative** is a multiplier of the entity's max health.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `mobSpawnX` / `mobSpawnY` | `-7` / `-1` | Shape of a naturally spawned shield |
+| `mobMaxX` / `mobMaxY` | `1e10` | Creatures' `x` / `y` caps |
+| `playerMaxX` / `playerMaxY` | `1e10` / `1` | Players' `x` / `y` caps |
+| `defaultHitsY` | `0` | Default `hitsY` |
+| `settleInterval` | `20` | Settlement interval, in ticks |
+| `lockHealth` | `true` | Freeze health while shielded; healing is folded into the shield |
+| `grantToMonsters` | `true` | Shield hostile creatures on spawn |
+| `blockKnockback` | `true` | Immune to knockback while shielded |
+| `blockDirectRemoval` | `false` | Refuse outright deletion of a shielded entity |
+| `debugSettlementLog` | `false` | Log every shield change |
+
+### For modpacks
+
+A naturally spawned shield has a fixed shape from the config. To scale it with progression or quest
+completion:
+
+- listen for `ShieldGrantEvent`, which fires before a shield is handed out and allows changing `x`
+  and `y` or cancelling it entirely;
+- or call the static methods on `UnlimitedShieldApi` at any time to read or rewrite a shield.

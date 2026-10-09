@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.xmly.unlimitshield.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "xmly_unlimitshield.refmap.json",
+  "mixins": [
+    "LivingEntityMixin",
+    "EntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

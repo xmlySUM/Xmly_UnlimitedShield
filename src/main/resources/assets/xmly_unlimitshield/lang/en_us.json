@@ -1,0 +1,20 @@
+{
+  "key.categories.xmly_unlimitshield": "Xmly's Unlimited Shield",
+  "key.xmly_unlimitshield.show_shield": "Toggle shield inspection",
+  "overlay.xmly_unlimitshield.no_shield": "no shield",
+  "overlay.xmly_unlimitshield.inspect_on": "Shield inspection: ON",
+  "overlay.xmly_unlimitshield.inspect_off": "Shield inspection: OFF",
+  "jade.xmly_unlimitshield.shield": "Shield: %s",
+  "enchantment.xmly_unlimitshield.shield_bit_removal": "Bit Shield Removal",
+  "enchantment.xmly_unlimitshield.shield_bit_removal.desc": "Cuts a shield down by whole powers of sixteen. The nether star's position sets the level: above the item raises it, below lowers it.",
+  "commands.xmly_unlimitshield.no_targets": "No living entity matched",
+  "commands.xmly_unlimitshield.added": "Granted %s entit(ies) a shield of %s",
+  "commands.xmly_unlimitshield.removed": "Removed the shield from %s entit(ies)",
+  "commands.xmly_unlimitshield.query": "%s: %s",
+  "enchantment.xmly_unlimitshield.combo_shield_break": "Combo Shield Break",
+  "enchantment.xmly_unlimitshield.combo_shield_break.desc": "Counts as 2^level hits per strike, so shields that settle per hit come apart far faster.",
+  "enchantment.xmly_unlimitshield.combo_vulnerability": "Combo Vulnerability",
+  "enchantment.xmly_unlimitshield.combo_vulnerability.desc": "Pushes the target's hit-count shield one step further from zero.",
+  "enchantment.xmly_unlimitshield.bit_shield_restoration": "Shield Restoration Curse",
+  "enchantment.xmly_unlimitshield.bit_shield_restoration.desc": "Curse. Whatever you hit has its shield exponent doubled for that settlement."
+}

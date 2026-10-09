@@ -1,0 +1,20 @@
+{
+  "key.categories.xmly_unlimitshield": "Xmly 无限护盾",
+  "key.xmly_unlimitshield.show_shield": "切换护盾查看",
+  "overlay.xmly_unlimitshield.no_shield": "无护盾",
+  "overlay.xmly_unlimitshield.inspect_on": "护盾查看：开",
+  "overlay.xmly_unlimitshield.inspect_off": "护盾查看：关",
+  "jade.xmly_unlimitshield.shield": "护盾：%s",
+  "enchantment.xmly_unlimitshield.shield_bit_removal": "比特盾除",
+  "enchantment.xmly_unlimitshield.shield_bit_removal.desc": "以十六的幂为单位削去护盾。下界之星在附魔物品上方升一级，下方降一级。",
+  "commands.xmly_unlimitshield.no_targets": "没有匹配到任何生物",
+  "commands.xmly_unlimitshield.added": "已为 %s 个实体添加护盾，护盾量 %s",
+  "commands.xmly_unlimitshield.removed": "已移除 %s 个实体的护盾",
+  "commands.xmly_unlimitshield.query": "%s：%s",
+  "enchantment.xmly_unlimitshield.combo_shield_break": "连击盾破",
+  "enchantment.xmly_unlimitshield.combo_shield_break.desc": "每次攻击按 2^等级 计次，让按次数结算的护盾崩得更快。",
+  "enchantment.xmly_unlimitshield.combo_vulnerability": "连击易伤",
+  "enchantment.xmly_unlimitshield.combo_vulnerability.desc": "把目标的次数盾向外推一格。",
+  "enchantment.xmly_unlimitshield.bit_shield_restoration": "盾复诅咒",
+  "enchantment.xmly_unlimitshield.bit_shield_restoration.desc": "诅咒。你打到的生物在结算时护盾指数翻倍。"
+}
